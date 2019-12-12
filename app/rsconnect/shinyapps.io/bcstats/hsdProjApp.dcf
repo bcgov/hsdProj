@@ -5,6 +5,6 @@ account: bcstats
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 1421868
-bundleId: 2566262
+bundleId: 2662351
 url: https://bcstats.shinyapps.io/hsdProjApp/
-when: 1572977381.94641
+when: 1576168130.65588
