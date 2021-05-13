@@ -9,10 +9,11 @@
 #
 # To deploy an update, update code and data, then load >library(rsconnect), set working
 # directory to app.R directory and >deployApp(appName = "hsdProjApp", appId =  1421868)
+# https://bcstats.shinyapps.io/hsdProjApp/
 
 #####
 # METADATA for app
-dataVersion <- "Households 2019"
+dataVersion <- "Households 2020"
 
 ## load libraries  ----
 ## installs any missing packages this script uses
