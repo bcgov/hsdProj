@@ -6,6 +6,8 @@ library(tidyverse)
 library(here)
 
 
+## note that Health Authority (HY) ID 0 = 6 = British Columbia. APL has it as 6.
+
 ## if df doesn't exist in global environment, get it
 if(!("df" %in% ls(.GlobalEnv))){
   
