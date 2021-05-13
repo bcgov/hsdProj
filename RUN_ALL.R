@@ -21,9 +21,9 @@ base_folder <- here("analysis", "inputs", paste0("/"))
 
 ## variables needed to read in Excel/csv data, if updating data
 file_name <- "Combined"   ## file name prefix ("1" or "5" are added to file_name in function later)
-#file_type <- "xlsx"      ## "xlsx" or "csv"
 file_type <- "csv"        ## "xlsx" or "csv"
-mysheet <- "DATA"         ## name of sheet with data
+#file_type <- "xlsx"      ## "xlsx" or "csv"
+mysheet <- "DATA"         ## name of sheet with data for xlsx
 col_RegionType <- "TYPE"  ## case-sensitive name of Region Type column
 col_Region <- "TYPEID"    ## case-sensitive name of Region number column
 col_Year <- "YR"          ## case-sensitive name of Year column
@@ -35,7 +35,7 @@ if(update_data == TRUE) {
 
   ## don't change order of data_cols or final_cols
   data_cols <- c(col_RegionType, col_Region, col_Year, col_Total)
-  final_cols<- c("Region.Type", "Region", "Year", "Total")
+  final_cols <- c("Region.Type", "Region", "Year", "Total")
   
   ## requires: csv or xlsx files in base_folder
   ## assumes: 5 columns (Type, Region, Year, Gender, Total)
@@ -43,6 +43,9 @@ if(update_data == TRUE) {
   source(here("analysis", "get_data.R"))
   
 }
+
+## Don't worry about warning: Missing column names filled in: 'X5' [5], 'X6' [6], 'X7' [7], 'X8' [8] 
+## There are no such columns in hsd data
 
 
 ### 4. deploy app ----
