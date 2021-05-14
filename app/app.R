@@ -4,16 +4,17 @@
 # Find out more about building applications with Shiny here:
 #
 #   http://shiny.rstudio.com/
-#
 #   http://rstudio.github.io/shinydashboard/get_started.html
 #
 # To deploy an update, update code and data, then load >library(rsconnect), set working
 # directory to app.R directory and >deployApp(appName = "hsdProjApp", appId =  1421868)
-# https://bcstats.shinyapps.io/hsdProjApp/
+# URL: https://bcstats.shinyapps.io/hsdProjApp/
 
-#####
-# METADATA for app
+## metadata for app ----
 dataVersion <- "Households 2020"
+methodsPDF <- "<a href='https://www2.gov.bc.ca/assets/gov/data/statistics/people-population-community/population/pop_small_area_household_projections_1999.pdf'>
+Small Area Household Projections (1999)</a>"
+githubLink <- "<a href='https://github.com/bcgov/hsdProj/'>https://github.com/bcgov/hsdProj/</a>"
 
 ## load libraries  ----
 ## installs any missing packages this script uses
@@ -31,6 +32,9 @@ ga_collect_pageview(page = "/hsdProjApp")
 ## read data ----
 data1 <- readRDS("data/data.rds")  ## by single-year intervals
 
+initVals <- c("Local Health Area", "British Columbia", max(data1$Year)) ## c(Region.Type, Region.Name, Year)
+
+## Define ui layout ----
 # UI demonstrating column layouts
 ui <- fluidPage(title = "BC Household Projections",
   theme = "bootstrap.css",
@@ -57,7 +61,9 @@ ui <- fluidPage(title = "BC Household Projections",
                   style="font-size:14px; color:#494949"),
                   HTML(paste0("<p>Don't see what you need? See our Custom Population Products 
                               <b><a href='https://www2.gov.bc.ca/gov/content/data/about-data-management/bc-stats/custom-products-services/custom-population-products'>page</a></b>
-                              for more information.</p>"))
+                              for more information.</p>")),
+                  HTML(paste0("<p>Methods documentation is available in this PDF: <b>", 
+                              methodsPDF, "</b>.</p>"))
             ),
            br()
     ),
@@ -91,11 +97,18 @@ ui <- fluidPage(title = "BC Household Projections",
                  br(),
                  tags$fieldset(
                    tags$legend(h3("Notes")),
-                   HTML(paste0("<ul><li>All figures are as of July 1 and are adjusted for census net undercoverage (including adjustment for incompletely enumerated Indian Reserves).</li>",
-                               "<li>As of January 2020, Local Health Area (LHA) numbering has been updated to reflect the latest version of the boundaries released by the Ministry of Health. Translation between old and new LHA identifiers can be downloaded <b>", 
+                   HTML(paste0("<ul><li>All figures are as of July 1 and are adjusted for census net 
+                               undercoverage (including adjustment for incompletely enumerated Indian Reserves).</li>",
+                               "<li>As of January 2020, Local Health Area (LHA) numbering has been 
+                               updated to reflect the latest version of the boundaries released by 
+                               the Ministry of Health. Translation between old and new LHA identifiers 
+                               can be downloaded <b>", 
                                downloadLink(outputId = "downloadTranslation", label = "here"), "</b>.</li>",
                                "<li>Data obtained through this application is distributed under the ", 
-                               "<b><a href='https://www2.gov.bc.ca/gov/content/data/open-data/open-government-licence-bc'>Open Government License</a></b>.</li></ul><br>"))
+                               "<b><a href='https://www2.gov.bc.ca/gov/content/data/open-data/open-government-licence-bc'>
+                               Open Government License</a></b>.</li>",
+                               "<li>The GitHub repo for this app is: <b>", githubLink, "</b>.</li>",
+                               "</ul><br>"))
                  )
              )
            )
@@ -132,8 +145,8 @@ server <- function(input, output, session) {
     selectInput(inputId = "Region.Type",
                 label = h4("Select a region type"),
                 choices = unique(data1$Region.Type),
-                selected = "Local Health Area"
-                , selectize = FALSE, size = 9    ## forces all 9 options to be shown at once (not drop-down)
+                selected = initVals[1],  ## default selection: "Local Health Area"
+                selectize = FALSE, size = 9    ## forces all 9 options to be shown at once (not drop-down)
                 )
   })
 
@@ -158,7 +171,9 @@ server <- function(input, output, session) {
     
     updateSelectInput(session,
                       inputId = "Region.Name",
-                      choices = choices_list)
+                      choices = choices_list,
+                      selected = initVals[2]  ## default selection: "British Columbia"
+                      )
   })
 
   ## select Year(s), multiples OK
@@ -166,6 +181,7 @@ server <- function(input, output, session) {
     selectInput(inputId = "Year",
                 label = h4("Select year(s)"),
                 choices = unique(data1$Year),
+                selected = initVals[3],  ## default selection: max year
                 multiple = TRUE,
                 selectize = FALSE, size = 7)
   })
@@ -176,11 +192,12 @@ server <- function(input, output, session) {
            nrow = 4, ncol = 2, byrow = TRUE, dimnames = list(c(1:4), c("From", "To")))
   })
 
-
   ## reactive resetButton send analytics when reset ----
   observeEvent(input$resetButton, {
     
-    ga_collect_event(event_category = "resetButton", event_label = "Reset", event_action = "Reset application")
+    ga_collect_event(event_category = "resetButton", 
+                     event_label = "Reset", 
+                     event_action = "Reset application")
     
     ## just reload the session
     session$reload()
@@ -192,20 +209,24 @@ server <- function(input, output, session) {
   
   observeEvent(rv$download_flag, {
     
-    ga_collect_event(event_category = "downloadButton", event_label = paste0("Download: ", input$Region.Type), event_action = "Download data")
+    ga_collect_event(event_category = "downloadButton", 
+                     event_label = paste0("Download: ", input$Region.Type), 
+                     event_action = "Download data")
     
   }, ignoreInit = TRUE)
   
   ## reactive send analytics when query table ----
   observeEvent(input$goButton, {
     
-    ga_collect_event(event_category = "goButton", event_label = paste0("Query: ", input$Region.Type), event_action = "Generate data")
+    ga_collect_event(event_category = "goButton", 
+                     event_label = paste0("Query: ", input$Region.Type), 
+                     event_action = "Generate data")
     
   })
   
   
   ## reactive data table and download ----
-  ## Create reactive values for input data to create table and download data
+  ## create reactive values for input data to create table and download data
   data_df <- eventReactive(input$goButton, {
     ## with input$goButton in eventReactive(), nothing will happen until button clicked
     
@@ -214,10 +235,14 @@ server <- function(input, output, session) {
 
     ## B. make selections
     Reg.Type <- c(input$Region.Type)  ## to be able to use as dynamic name in select
-    df[df$Region.Type == input$Region.Type, ] %>%
-      filter(Region.Name %in% input$Region.Name) %>%
-      filter(Year %in% input$Year) %>%
-      select(Region, !!Reg.Type := Region.Name, everything(), -Region.Type)
+    df[df$Region.Type == initVals[1], ] %>%
+      filter(Region.Name == initVals[2]) %>%
+      filter(Year == initVals[3]) %>%
+      select(Region, !!initVals[1] := Region.Name, Year, Total)
+    # df[df$Region.Type == input$Region.Type, ] %>%
+    #   filter(Region.Name %in% input$Region.Name) %>%
+    #   filter(Year %in% input$Year) %>%
+    #   select(Region, !!Reg.Type := Region.Name, everything(), -Region.Type)
 
     ## C. call data_df() in renderDataTable to create table in app
     ## D. call data_df() in downloadHandler to download data
@@ -230,7 +255,7 @@ server <- function(input, output, session) {
       data_df()
       
     },
-    filter="none",
+    filter = "none",
     ## table options: https://shiny.rstudio.com/articles/datatables.html
     options = list(
       pageLength = 10,       ## show only X rows/page; https://datatables.net/reference/option/pageLength
@@ -248,7 +273,7 @@ server <- function(input, output, session) {
     },
 
     content = function(file) {
-      write.csv(data_df(), file, row.names = FALSE, na = "")  ## col.names = FALSE, append = TRUE,
+      write.csv(data_df(), file, row.names = FALSE, na = "")
       rv$download_flag <- rv$download_flag + 1
     }
   )
