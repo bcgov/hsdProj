@@ -93,6 +93,7 @@ ui <- fluidPage(title = "BC Household Projections",
                    )
                  ),
                  br(),br(),
+                 DTOutput("default_table"),  ## only shows until "Generate Output" is clicked (and again on reset)
                  DTOutput("table"),
                  br(),
                  tags$fieldset(
@@ -192,6 +193,44 @@ server <- function(input, output, session) {
            nrow = 4, ncol = 2, byrow = TRUE, dimnames = list(c(1:4), c("From", "To")))
   })
 
+  ## initial table with default selections ----
+  
+  ## initVals <- c(Region.Type, Region.Name, Year)
+  data_init <- function(data1, initVals) {
+    
+    data1[data1$Region.Type == initVals[1], ] %>%
+      filter(Region.Name == initVals[2]) %>%
+      filter(Year == initVals[3]) %>%
+      select(Region, !!initVals[1] := Region.Name, Year, Total)
+  }
+  
+  # https://stackoverflow.com/questions/54393592/hide-plot-when-action-button-or-slider-changes-in-r-shiny
+  ## initial setting to show the table
+  showDefaultTable <- reactiveVal(TRUE)
+  
+  ## make default_table with data_init()
+  output$default_table <- DT::renderDataTable(datatable({
+    
+    ## show table only initially (before "Generate Output" button is clicked)
+    if(showDefaultTable()) {
+      data_init(data1, initVals)
+    } else {
+      NULL
+    }
+  },
+  filter = "none",
+  ## table options: https://shiny.rstudio.com/articles/datatables.html
+  options = list(
+    pageLength = 10,       ## show only X rows/page; https://datatables.net/reference/option/pageLength
+    lengthMenu = c(10, 20, 25, 50), ## choices of pageLength to display
+    scrollX = TRUE,        ## allows horizontal scrolling; https://datatables.net/reference/option/scrollX
+    dom ="ltpi"
+  )
+  )
+  )
+  
+  ## note: showDefaultTable changes to FALSE whenever goButton is clicked in data_df
+  
   ## reactive resetButton send analytics when reset ----
   observeEvent(input$resetButton, {
     
@@ -228,22 +267,21 @@ server <- function(input, output, session) {
   ## reactive data table and download ----
   ## create reactive values for input data to create table and download data
   data_df <- eventReactive(input$goButton, {
+    
     ## with input$goButton in eventReactive(), nothing will happen until button clicked
+    
+    showDefaultTable(FALSE)  ## now hide initial default table
     
     ## A. set df as appropriate dataset depending on age group type chosen
     df <- data1
 
     ## B. make selections
     Reg.Type <- c(input$Region.Type)  ## to be able to use as dynamic name in select
-    df[df$Region.Type == initVals[1], ] %>%
-      filter(Region.Name == initVals[2]) %>%
-      filter(Year == initVals[3]) %>%
-      select(Region, !!initVals[1] := Region.Name, Year, Total)
-    # df[df$Region.Type == input$Region.Type, ] %>%
-    #   filter(Region.Name %in% input$Region.Name) %>%
-    #   filter(Year %in% input$Year) %>%
-    #   select(Region, !!Reg.Type := Region.Name, everything(), -Region.Type)
-
+    df[df$Region.Type == input$Region.Type, ] %>%
+      filter(Region.Name %in% input$Region.Name) %>%
+      filter(Year %in% input$Year) %>%
+      select(Region, !!Reg.Type := Region.Name, Year, Total)  #everything(), -Region.Type)
+    
     ## C. call data_df() in renderDataTable to create table in app
     ## D. call data_df() in downloadHandler to download data
 
