@@ -2,13 +2,16 @@
 # the 'Run App' button above.
 #
 # Find out more about building applications with Shiny here:
-#
 #   http://shiny.rstudio.com/
 #   http://rstudio.github.io/shinydashboard/get_started.html
 #
-# To deploy an update, update code and data, then load >library(rsconnect), set working
-# directory to app.R directory and >deployApp(appName = "hsdProjApp", appId =  1421868)
-# URL: https://bcstats.shinyapps.io/hsdProjApp/
+# To deploy an update:
+#   1. update code and data, and !! likely dataVersion !!
+#   2. load library(rsconnect)
+#   3. set working directory to app.R directory (setwd("I:/PEOPLEPROJECTIONS/00 - R_code/shiny_apps/Production/hsdProjApp/app"))
+#   4. deployApp(appName = "hsdProjApp", appId = 1421868)
+# 
+# https://bcstats.shinyapps.io/hsdProjApp/
 
 ## metadata for app ----
 dataVersion <- "Households 2020"
@@ -24,7 +27,9 @@ if (!require('shinydashboard')) install.packages('shinydashboard')
 if (!require('rsconnect')) install.packages('rsconnect')
 if (!require('DT')) install.packages('DT')
 if (!require('GAlogger')) devtools::install_github("bnosac/GAlogger")
+if (!require('markdown')) install.packages('markdown')
 
+## Google Analytics ----
 ga_set_tracking_id("UA-150850915-3")
 ga_set_approval(consent = TRUE)
 ga_collect_pageview(page = "/hsdProjApp")
@@ -52,18 +57,20 @@ ui <- fluidPage(title = "BC Household Projections",
              )
            )
     ),
-    column(width=12,
+    column(width = 12,
+           style = "margin-top:100px",
+           
+           ## creating tabs here
+           # tabsetPanel(
+             # id = "tabs",
+             
+             
             tags$fieldset(
                   tags$legend(h2("How to use the household projections application", style="margin-top:90px")),
                   p("Select a region type, and then the region(s) and year(s) of interest.
                   Use the Ctrl or Shift key to select multiple entries. Then click
                   'Generate output'. You can view the results on screen or download a CSV file.",
-                  style="font-size:14px; color:#494949"),
-                  HTML(paste0("<p>Don't see what you need? See our Custom Population Products 
-                              <b><a href='https://www2.gov.bc.ca/gov/content/data/about-data-management/bc-stats/custom-products-services/custom-population-products'>page</a></b>
-                              for more information.</p>")),
-                  HTML(paste0("<p>Methods documentation is available in this PDF: <b>", 
-                              methodsPDF, "</b>.</p>"))
+                  style="font-size:14px; color:#494949")
             ),
            br()
     ),
