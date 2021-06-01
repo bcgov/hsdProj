@@ -87,7 +87,7 @@ data.pretty <- function(base_folder, file_name, file_type, mysheet, data_cols, f
   saveRDS(df, paste0("app/data/data", ".rds"))
   
   ## save again in Archive folder with date
-  saveRDS(df, paste0("app/data/Archive/data", age_var, "_", Sys.Date(), ".rds"))
+  saveRDS(df, paste0("data_archive/data", age_var, "_", Sys.Date(), ".rds"))
   
   ## return df
   df
