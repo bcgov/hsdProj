@@ -15,9 +15,6 @@
 
 ## metadata for app ----
 dataVersion <- "Households 2020"
-methodsPDF <- "<a href='https://www2.gov.bc.ca/assets/gov/data/statistics/people-population-community/population/pop_small_area_household_projections_1999.pdf'>
-Small Area Household Projections (1999)</a>"
-githubLink <- "<a href='https://github.com/bcgov/hsdProj/'>https://github.com/bcgov/hsdProj/</a>"
 
 ## load libraries  ----
 ## installs any missing packages this script uses
@@ -61,70 +58,89 @@ ui <- fluidPage(title = "BC Household Projections",
            style = "margin-top:100px",
            
            ## creating tabs here
-           # tabsetPanel(
-             # id = "tabs",
+           tabsetPanel(
+             id = "tabs",
              
+             ## Main tab ----
+             tabPanel(title = "Main",
+                      tags$head(tags$style(type='text/css', ".nav-tabs {font-size: 20px} ")),
+                      
+                      sidebarLayout(
+                        sidebarPanel(style="background-color:#F2F2F2;",
+                                     tags$fieldset(
+                                       tags$legend(h3("Step 1: Select data")),
+                                       uiOutput("Region.Type"),
+                                       uiOutput("Region.Name"),
+                                       uiOutput("Year")
+                                       ),
+                                     br(),
+                                     tags$fieldset(
+                                       HTML(paste0("Produced by BC Stats ", "<br>", "Data version: ", 
+                                                   dataVersion))
+                                       )
+                        ),  ## end of sidebarPanel
+                        
+                        mainPanel(
+                          ## Actions and table ----
+                          br(),
+                          tags$fieldset(
+                            tags$legend(h3("Step 2: Action")),
+                            column(width = 12,
+                                   actionButton(inputId = "goButton", label = "Generate output"),
+                                   actionButton(inputId = "resetButton", label = "Reset selection"),
+                                   downloadButton(outputId = "downloadData", label = "Download data as csv")
+                                   )
+                            ),
+                          br(),br(),
+                          DTOutput("default_table"),  ## only shows until "Generate Output" is clicked (and again on reset)
+                          DTOutput("table"),
+                          br(),
+                          ## end of Actions and table
+                          
+                          ## Notes ----
+                          tags$fieldset(
+                            tags$legend(h3("Notes")),
+                            HTML(paste0("<ul><li>All figures are as of July 1 and are adjusted for 
+                                                 census net undercoverage (including adjustment for 
+                                                 incompletely enumerated Indian Reserves).</li>",
+                                             "<li>As of January 2020, Local Health Area (LHA) 
+                                                  numbering has been updated to reflect the latest 
+                                                  version of the boundaries released by the Ministry 
+                                                  of Health. Translation between old and new LHA 
+                                                  identifiers can be downloaded <b>", 
+                                                  downloadLink(outputId = "downloadTranslation", label = "here"),
+                                                  "</b>.</li>",
+                                             "<li>Data obtained through this application is 
+                                                  distributed under the ", "<b>
+                                                  <a href='https://www2.gov.bc.ca/gov/content/data/open-data/open-government-licence-bc'>
+                                                  Open Government License</a></b>.</li>",
+                                        "<li>Don't see what you need? See our Custom 
+                                                        Population Products <b>
+                                                        <a href='https://www2.gov.bc.ca/gov/content/data/about-data-management/bc-stats/custom-products-services/custom-population-products'>page</a>
+                                                        </b> for more information.</li>","</ul><br>"))
+                          )  ## end of tags$fieldset (Notes)
+                          ## ----
+                        )  ## end of mainPanel
+                      )  ## end of sidbarLayout
+             ),  ## end of tabPanel "Main"
              
-            tags$fieldset(
-                  tags$legend(h2("How to use the household projections application", style="margin-top:90px")),
-                  p("Select a region type, and then the region(s) and year(s) of interest.
-                  Use the Ctrl or Shift key to select multiple entries. Then click
-                  'Generate output'. You can view the results on screen or download a CSV file.",
-                  style="font-size:14px; color:#494949")
-            ),
-           br()
-    ),
-    column(width = 12,
-           sidebarLayout(
-             sidebarPanel(style="background-color:#F2F2F2;",
-               tags$fieldset(
-                 tags$legend(h3("Data selection")),
-                 uiOutput("Region.Type"),
-                 uiOutput("Region.Name"),
-                 uiOutput("Year")
-               ),
-               br(),
-               tags$fieldset(
-                 tags$legend(h4("Additional information")),
-                 HTML(paste0("Produced by BC Stats ", "<br>", "Data version: ", 
-                             dataVersion))
-               )
-             ),
-             mainPanel(
-                 tags$fieldset(
-                   tags$legend(h3("Actions")),
-                   column(width=12,
-                          actionButton(inputId = "goButton", label = "Generate output"),
-                          actionButton(inputId = "resetButton", label = "Reset selection"),
-                          downloadButton(outputId = "downloadData", label = "Download data as csv")
-                   )
-                 ),
-                 br(),br(),
-                 DTOutput("default_table"),  ## only shows until "Generate Output" is clicked (and again on reset)
-                 DTOutput("table"),
-                 br(),
-                 tags$fieldset(
-                   tags$legend(h3("Notes")),
-                   HTML(paste0("<ul><li>All figures are as of July 1 and are adjusted for census net 
-                               undercoverage (including adjustment for incompletely enumerated Indian Reserves).</li>",
-                               "<li>As of January 2020, Local Health Area (LHA) numbering has been 
-                               updated to reflect the latest version of the boundaries released by 
-                               the Ministry of Health. Translation between old and new LHA identifiers 
-                               can be downloaded <b>", 
-                               downloadLink(outputId = "downloadTranslation", label = "here"), "</b>.</li>",
-                               "<li>Data obtained through this application is distributed under the ", 
-                               "<b><a href='https://www2.gov.bc.ca/gov/content/data/open-data/open-government-licence-bc'>
-                               Open Government License</a></b>.</li>",
-                               "<li>The GitHub repo for this app is: <b>", githubLink, "</b>.</li>",
-                               "</ul><br>"))
-                 )
-             )
-           )
-    ),
+             ## Methods tab ----
+             tabPanel(title = "Methods",
+                      column(width = 12,
+                             style = "margin-top:25px",
+                             tags$fieldset(
+                               tags$legend(h3("Population Information")),
+                               includeMarkdown("Methods.md")
+                             )
+                      )
+             ) ## end of tabPanel "Methods"
+           )  ## end of tabsetPanel
+    ), ## end of column
+    ## footer ----
     column(width = 12,
            style = "background-color:#003366; border-top:2px solid #fcba19;",
            
-            tags$footer(class="footer",
+           tags$footer(class="footer",
               tags$div(class="container", style="display:flex; justify-content:center; flex-direction:column; text-align:center; height:46px;",
                 tags$ul(style="display:flex; flex-direction:row; flex-wrap:wrap; margin:0; list-style:none; align-items:center; height:100%;",
                   tags$li(a(href="https://www2.gov.bc.ca/gov/content/home", "Home", style="font-size:1em; font-weight:normal; color:white; padding-left:5px; padding-right:5px; border-right:1px solid #4b5e7e;")),
@@ -135,9 +151,10 @@ ui <- fluidPage(title = "BC Household Projections",
                   tags$li(a(href="https://www2.gov.bc.ca/StaticWebResources/static/gov3/html/contact-us.html", "Contact", style="font-size:1em; font-weight:normal; color:white; padding-left:5px; padding-right:5px; border-right:1px solid #4b5e7e;"))
                 )
               )
-             )
-    )
-  )
+           )
+    ) ## end of column "footer"
+    ## ----
+  )  ## end of fluidrow
 )
 
 ## Define server logic ----
