@@ -20,7 +20,7 @@ update_data = TRUE     ## set to TRUE if you need to update the underlying data,
 base_folder <- here("analysis", "inputs", paste0("/"))
 
 ## variables needed to read in Excel/csv data, if updating data
-file_name <- "Combined"   ## file name prefix ("1" or "5" are added to file_name in function later)
+file_name <- "Combined2021"   ## file name prefix ("1" or "5" are added to file_name in function later)
 file_type <- "csv"        ## "xlsx" or "csv"
 #file_type <- "xlsx"      ## "xlsx" or "csv"
 mysheet <- "DATA"         ## name of sheet with data for xlsx
