@@ -20,6 +20,5 @@ The GitHub repo for this app is: **<a href='https://github.com/bcgov/hsdProj'>ht
 
 ### Related Population Apps
 
-* Population Estimates app: **<a href='https://bcstats.shinyapps.io/popApp/'>https://bcstats.shinyapps.io/popApp/</a>**
-* Population Projections app: **<a href='https://bcstats.shinyapps.io/popProjApp/'>https://bcstats.shinyapps.io/popProjApp/</a>**
+* Population Estimates & Projections app: **<a href='https://bcstats.shinyapps.io/popApp/'>https://bcstats.shinyapps.io/popApp/</a>**
 <br><br>
