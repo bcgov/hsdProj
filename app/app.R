@@ -14,7 +14,7 @@
 # https://bcstats.shinyapps.io/hsdProjApp/
 
 ## metadata for app ----
-dataVersion <- "Households 2020"
+dataVersion <- "Households 2021"
 
 ## load libraries  ----
 ## installs any missing packages this script uses
@@ -50,7 +50,7 @@ ui <- fluidPage(title = "BC Household Projections",
                  img(src = "bcstats_logo_rev.png", title = "BC Stats", height = "80px", alt = "British Columbia - BC Stats"),
                  onclick="gtag"
                ),
-               h1("British Columbia - Household Projections", style="font-weight:400; color:white; margin: 5px 5px 0 18px;")
+               h1("Household Projections for British Columbia", style="font-weight:400; color:white; margin: 5px 5px 0 18px;")
              )
            )
     ),
