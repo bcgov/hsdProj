@@ -25,6 +25,7 @@ if (!require('rsconnect')) install.packages('rsconnect')
 if (!require('DT')) install.packages('DT')
 if (!require('GAlogger')) devtools::install_github("bnosac/GAlogger")
 if (!require('markdown')) install.packages('markdown')
+if (!require('janitor')) install.packages('janitor')
 
 ## Google Analytics ----
 ga_set_tracking_id("UA-150850915-3")
@@ -33,8 +34,16 @@ ga_collect_pageview(page = "/hsdProjApp")
 
 ## read data ----
 data1 <- readRDS("data/data.rds")  ## by single-year intervals
+data1 <- data1 %>% 
+  mutate(HOUSEHOLDS = format(HOUSEHOLDS, big.mark = ","),
+         PERSONS_PER_HOUSEHOLD = round_half_up(PERSONS_PER_HOUSEHOLD, digits = 3)) %>%
+  rename(Year = YEAR, Type = TYPE, Region = REGION_ID, 
+         Region.Type = REGION_TYPE, Region.Name = REGION_NAME,
+         `Number of households` = HOUSEHOLDS, `Average household size` = PERSONS_PER_HOUSEHOLD)
 
-initVals <- c("Local Health Area", "British Columbia", max(data1$Year)) ## c(Region.Type, Region.Name, Year)
+initVals <- c("Development Region", "British Columbia", max(data1$Year)) ## c(Region.Type, Region.Name, Year)
+switch_wording <- "Estimates above, Projections below"  ## text in Years selection AFTER switch-year
+
 
 ## Define ui layout ----
 # UI demonstrating column layouts
@@ -69,22 +78,41 @@ ui <- fluidPage(title = "BC Household Projections",
                         sidebarPanel(style="background-color:#F2F2F2;",
                                      tags$fieldset(
                                        tags$legend(h3("Step 1: Select data")),
-                                       uiOutput("Region.Type"),
+                                       selectInput(inputId = "Region.Type",
+                                                   label = h4("Select a region type"),
+                                                   choices = unique(data1$Region.Type),
+                                                   selected = initVals[1],  ## default selection: "Local Health Area"
+                                                   selectize = FALSE, size = 4    ## forces all 9 options to be shown at once (not drop-down)
+                                       ),
                                        uiOutput("Region.Name"),
+                                       uiOutput("Switch.Year"),
+                                       br(),
                                        uiOutput("Year")
                                        ),
                                      br(),
                                      tags$fieldset(
-                                       HTML(paste0("Produced by BC Stats ", "<br>", "Data version: ", 
-                                                   dataVersion))
-                                       )
+                                       HTML(paste0("Produced by BC Stats ", "<br>", 
+                                                   "Data available on the <a href = 'https://catalogue.data.gov.bc.ca/dataset/2a8ddf6c-dfb9-4187-a66d-9bb15b15ea83' target = '_blank'>BC Data Catalogue</a>"))
+                                     )
                         ),  ## end of sidebarPanel
                         
                         mainPanel(
                           ## Actions and table ----
                           br(),
                           tags$fieldset(
-                            tags$legend(h3("Step 2: Action")),
+                            ### statistics selection ----
+                            tags$legend(h3("Step 2: Choose statistic")),
+                            column(width = 12,
+                                   tags$fieldset(tags$legend(h4("Select which statistic to display")),
+                                                 radioButtons(inputId = "Statistic_Var",
+                                                              label = NULL,
+                                                              choices = c("Number of households", "Average number of persons per household" = "Average household size"),
+                                                              inline = TRUE,
+                                                              selected = "Number of households")))
+                          ),
+                          ### action buttons ----
+                          tags$fieldset(
+                            hr(),
                             column(width = 12,
                                    actionButton(inputId = "goButton", label = "Generate output"),
                                    actionButton(inputId = "resetButton", label = "Reset selection"),
@@ -103,13 +131,13 @@ ui <- fluidPage(title = "BC Household Projections",
                             HTML(paste0("<ul><li>All figures are as of July 1 and are adjusted for 
                                                  census net undercoverage (including adjustment for 
                                                  incompletely enumerated Indian Reserves).</li>",
-                                             "<li>As of January 2020, Local Health Area (LHA) 
-                                                  numbering has been updated to reflect the latest 
-                                                  version of the boundaries released by the Ministry 
-                                                  of Health. Translation between old and new LHA 
-                                                  identifiers can be downloaded <b>", 
-                                                  downloadLink(outputId = "downloadTranslation", label = "here"),
-                                                  "</b>.</li>",
+                                             # "<li>As of January 2020, Local Health Area (LHA) 
+                                             #      numbering has been updated to reflect the latest 
+                                             #      version of the boundaries released by the Ministry 
+                                             #      of Health. Translation between old and new LHA 
+                                             #      identifiers can be downloaded <b>", 
+                                             #      downloadLink(outputId = "downloadTranslation", label = "here"),
+                                             #     "</b>.</li>",
                                              "<li>Data obtained through this application is 
                                                   distributed under the ", "<b>
                                                   <a href='https://www2.gov.bc.ca/gov/content/data/open-data/open-government-licence-bc'>
@@ -119,7 +147,6 @@ ui <- fluidPage(title = "BC Household Projections",
                                                         <a href='https://www2.gov.bc.ca/gov/content/data/about-data-management/bc-stats/custom-products-services/custom-population-products'>page</a>
                                                         </b> for more information.</li>","</ul><br>"))
                           )  ## end of tags$fieldset (Notes)
-                          ## ----
                         )  ## end of mainPanel
                       )  ## end of sidbarLayout
              ),  ## end of tabPanel "Main"
@@ -153,7 +180,6 @@ ui <- fluidPage(title = "BC Household Projections",
               )
            )
     ) ## end of column "footer"
-    ## ----
   )  ## end of fluidrow
 )
 
@@ -164,16 +190,6 @@ server <- function(input, output, session) {
   ## defaults: selectInput(inputId, label, choices, selected = NULL, multiple = FALSE,
   ##                       selectize = TRUE, width = NULL, size = NULL)
   ## size = how many items to show in box, requires selectize = FALSE
-
-  ## select Region.Type, just one
-  output$Region.Type <- renderUI({
-    selectInput(inputId = "Region.Type",
-                label = h4("Select a region type"),
-                choices = unique(data1$Region.Type),
-                selected = initVals[1],  ## default selection: "Local Health Area"
-                selectize = FALSE, size = 9    ## forces all 9 options to be shown at once (not drop-down)
-                )
-  })
 
   ## select Region(s) within selected Region.Type, multiples OK
   output$Region.Name <- renderUI({
@@ -200,16 +216,70 @@ server <- function(input, output, session) {
                       selected = initVals[2]  ## default selection: "British Columbia"
                       )
   })
-
+  
+  ### switch_year ----
+  switch_year <- reactive({
+    data1 %>%
+      filter(Region.Type == input$Region.Type) %>%
+      filter(Type == "Estimate") %>%
+      summarize(switch_year = max(Year)) %>%
+      pull(switch_year)
+  })
+  
+  ### Proj_Years ----
+  Proj_Years <- reactive({
+    data1 %>%
+      filter(Region.Type == input$Region.Type,
+             Type == "Projection") %>%
+      summarize(min = min(Year),
+                max = max(Year),
+                Proj_Years = paste(min, max, sep = "-")) %>%
+      pull(Proj_Years)
+  })
+  
+  ### Switch.Year text ----
+  output$Switch.Year <- renderUI({
+    
+    HTML(paste0("Estimate and projection figures can be updated
+                                                  independently at different times of the year.",
+                "<br><br>",
+                "<strong>Estimates:</strong> Years ", switch_year(),
+                " and earlier", "<br>",
+                "<strong>Projections:</strong> Years ", Proj_Years()
+    ))
+    
+  })
+  
+  ### Year ----
   ## select Year(s), multiples OK
+  # HTML(paste0("<strong>",switch_wording,"</strong>"))
   output$Year <- renderUI({
+    
+    years <- data1 %>%
+      filter(Region.Type == input$Region.Type) %>%
+      distinct(Year)
+    
+    years_fmtd <- c(min(years$Year):switch_year(), paste("--",switch_wording,"--"), (switch_year() + 1):max(years$Year))
+    
     selectInput(inputId = "Year",
                 label = h4("Select year(s)"),
-                choices = unique(data1$Year),
-                selected = initVals[3],  ## default selection: max year
+                choices = years_fmtd, #unique(data1$Year),
+                selected = initVals[[3]],
                 multiple = TRUE,
                 selectize = FALSE, size = 7)
   })
+  
+  
+
+  ## select Year(s), multiples OK
+  # output$Year <- renderUI({
+  #   selectInput(inputId = "Year",
+  #               label = h4("Select year(s)"),
+  #               choices = unique(data1$Year),
+  #               selected = initVals[3],  ## default selection: max year
+  #               multiple = TRUE,
+  #               selectize = FALSE, size = 7)
+  # })
 
   ## example table for custom age groups (as text to keep decimals out)
   output$example_table <- renderTable({
@@ -225,7 +295,7 @@ server <- function(input, output, session) {
     data1[data1$Region.Type == initVals[1], ] %>%
       filter(Region.Name == initVals[2]) %>%
       filter(Year == initVals[3]) %>%
-      select(Region, !!initVals[1] := Region.Name, Year, Total)
+      select(Region, !!initVals[1] := Region.Name, Year, `Number of households`)
   }
   
   # https://stackoverflow.com/questions/54393592/hide-plot-when-action-button-or-slider-changes-in-r-shiny
@@ -245,6 +315,7 @@ server <- function(input, output, session) {
   filter = "none",
   ## table options: https://shiny.rstudio.com/articles/datatables.html
   options = list(
+    columnDefs = list(list(className = 'dt-right', targets = -1)),
     pageLength = 10,       ## show only X rows/page; https://datatables.net/reference/option/pageLength
     lengthMenu = c(10, 20, 25, 50), ## choices of pageLength to display
     scrollX = TRUE,        ## allows horizontal scrolling; https://datatables.net/reference/option/scrollX
@@ -301,10 +372,11 @@ server <- function(input, output, session) {
 
     ## B. make selections
     Reg.Type <- c(input$Region.Type)  ## to be able to use as dynamic name in select
-    df[df$Region.Type == input$Region.Type, ] %>%
+    df %>%
+      filter(Region.Type == input$Region.Type) %>%
       filter(Region.Name %in% input$Region.Name) %>%
       filter(Year %in% input$Year) %>%
-      select(Region, !!Reg.Type := Region.Name, Year, Total)  #everything(), -Region.Type)
+      select(Region, !!Reg.Type := Region.Name, Year, all_of(input$Statistic_Var))  #everything(), -Region.Type)
     
     ## C. call data_df() in renderDataTable to create table in app
     ## D. call data_df() in downloadHandler to download data
@@ -320,6 +392,7 @@ server <- function(input, output, session) {
     filter = "none",
     ## table options: https://shiny.rstudio.com/articles/datatables.html
     options = list(
+      columnDefs = list(list(className = 'dt-right', targets = -1)),
       pageLength = 10,       ## show only X rows/page; https://datatables.net/reference/option/pageLength
       lengthMenu = c(10, 20, 25, 50), ## choices of pageLength to display
       scrollX = TRUE,        ## allows horizontal scrolling; https://datatables.net/reference/option/scrollX
