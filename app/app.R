@@ -53,7 +53,7 @@ data1 <- data1 %>%
          PERSONS_PER_HOUSEHOLD = round_half_up(PERSONS_PER_HOUSEHOLD, digits = 3)) %>%
   rename(Year = YEAR, Type = TYPE, Region = REGION_ID, 
          Region.Type = REGION_TYPE, Region.Name = REGION_NAME,
-         `Number of households` = HOUSEHOLDS, `Average household size` = PERSONS_PER_HOUSEHOLD)
+         `Number of households` = HOUSEHOLDS, `Persons per household` = PERSONS_PER_HOUSEHOLD)
 
 initVals <- c("Development Region", "British Columbia", max(data1$Year)) ## c(Region.Type, Region.Name, Year)
 switch_wording <- "Estimates above, Projections below"  ## text in Years selection AFTER switch-year
@@ -120,7 +120,7 @@ ui <- fluidPage(title = "BC Household Projections",
                                    tags$fieldset(tags$legend(h4("Select which statistic to display")),
                                                  radioButtons(inputId = "Statistic_Var",
                                                               label = NULL,
-                                                              choices = c("Number of households", "Average number of persons per household" = "Average household size"),
+                                                              choices = c("Number of households", "Average number of persons per household" = "Persons per household"),
                                                               inline = TRUE,
                                                               selected = "Number of households")))
                           ),
@@ -156,6 +156,7 @@ ui <- fluidPage(title = "BC Household Projections",
                                                   distributed under the ", "<b>
                                                   <a href='https://www2.gov.bc.ca/gov/content/data/open-data/open-government-licence-bc'>
                                                   Open Government License</a></b>.</li>",
+                                        "<li>Wondering about the location of a particular region or its boundaries? Check out the <b><a href = 'https://www2.gov.bc.ca/gov/content/data/geographic-data-services/land-use/administrative-boundaries'>Administrative Boundaries</a></b> page for more information.</li>",
                                         "<li>Don't see what you need? See our Custom 
                                                         Population Products <b>
                                                         <a href='https://www2.gov.bc.ca/gov/content/data/about-data-management/bc-stats/custom-products-services/custom-population-products'>page</a>
@@ -309,7 +310,7 @@ server <- function(input, output, session) {
     data1[data1$Region.Type == initVals[1], ] %>%
       filter(Region.Name == initVals[2]) %>%
       filter(Year == initVals[3]) %>%
-      select(Region, !!initVals[1] := Region.Name, Year, `Number of households`)
+      select(`Region ID` = Region, !!initVals[1] := Region.Name, Year, `Number of households`)
   }
   
   # https://stackoverflow.com/questions/54393592/hide-plot-when-action-button-or-slider-changes-in-r-shiny
@@ -390,7 +391,7 @@ server <- function(input, output, session) {
       filter(Region.Type == input$Region.Type) %>%
       filter(Region.Name %in% input$Region.Name) %>%
       filter(Year %in% input$Year) %>%
-      select(Region, !!Reg.Type := Region.Name, Year, all_of(input$Statistic_Var))  #everything(), -Region.Type)
+      select(`Region ID` = Region, !!Reg.Type := Region.Name, Year, all_of(input$Statistic_Var))  #everything(), -Region.Type)
     
     ## C. call data_df() in renderDataTable to create table in app
     ## D. call data_df() in downloadHandler to download data
