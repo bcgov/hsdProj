@@ -113,20 +113,9 @@ ui <- fluidPage(title = "BC Household Projections",
                         mainPanel(
                           ## Actions and table ----
                           br(),
-                          tags$fieldset(
-                            ### statistics selection ----
-                            tags$legend(h3("Step 2: Choose statistic")),
-                            column(width = 12,
-                                   tags$fieldset(tags$legend(h4("Select which statistic to display")),
-                                                 radioButtons(inputId = "Statistic_Var",
-                                                              label = NULL,
-                                                              choices = c("Number of households", "Average number of persons per household" = "Persons per household"),
-                                                              inline = TRUE,
-                                                              selected = "Number of households")))
-                          ),
                           ### action buttons ----
                           tags$fieldset(
-                            hr(),
+                            tags$legend(h3("Step 2: Action")),
                             column(width = 12,
                                    actionButton(inputId = "goButton", label = "Generate output"),
                                    actionButton(inputId = "resetButton", label = "Reset selection"),
@@ -310,7 +299,7 @@ server <- function(input, output, session) {
     data1[data1$Region.Type == initVals[1], ] %>%
       filter(Region.Name == initVals[2]) %>%
       filter(Year == initVals[3]) %>%
-      select(`Region ID` = Region, !!initVals[1] := Region.Name, Year, `Number of households`)
+      select(`Region ID` = Region, !!initVals[1] := Region.Name, Year, Type, `Number of households`, `Persons per household`)
   }
   
   # https://stackoverflow.com/questions/54393592/hide-plot-when-action-button-or-slider-changes-in-r-shiny
@@ -330,7 +319,7 @@ server <- function(input, output, session) {
   filter = "none",
   ## table options: https://shiny.rstudio.com/articles/datatables.html
   options = list(
-    columnDefs = list(list(className = 'dt-right', targets = -1)),
+    columnDefs = list(list(className = 'dt-right', targets = c(5,6))),
     pageLength = 10,       ## show only X rows/page; https://datatables.net/reference/option/pageLength
     lengthMenu = c(10, 20, 25, 50), ## choices of pageLength to display
     scrollX = TRUE,        ## allows horizontal scrolling; https://datatables.net/reference/option/scrollX
@@ -391,7 +380,7 @@ server <- function(input, output, session) {
       filter(Region.Type == input$Region.Type) %>%
       filter(Region.Name %in% input$Region.Name) %>%
       filter(Year %in% input$Year) %>%
-      select(`Region ID` = Region, !!Reg.Type := Region.Name, Year, all_of(input$Statistic_Var))  #everything(), -Region.Type)
+      select(`Region ID` = Region, !!Reg.Type := Region.Name, Year, Type, `Number of households`, `Persons per household`)  #everything(), -Region.Type)
     
     ## C. call data_df() in renderDataTable to create table in app
     ## D. call data_df() in downloadHandler to download data
@@ -407,7 +396,7 @@ server <- function(input, output, session) {
     filter = "none",
     ## table options: https://shiny.rstudio.com/articles/datatables.html
     options = list(
-      columnDefs = list(list(className = 'dt-right', targets = -1)),
+      columnDefs = list(list(className = 'dt-right', targets = c(5,6))),
       pageLength = 10,       ## show only X rows/page; https://datatables.net/reference/option/pageLength
       lengthMenu = c(10, 20, 25, 50), ## choices of pageLength to display
       scrollX = TRUE,        ## allows horizontal scrolling; https://datatables.net/reference/option/scrollX
