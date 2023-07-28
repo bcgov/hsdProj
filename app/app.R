@@ -65,18 +65,9 @@ ui <- fluidPage(title = "BC Household Projections",
   theme = "bootstrap.css",
   HTML("<html lang='en'>"),
   fluidRow(
-    column(width = 12, 
-           style = "background-color:#003366; border-bottom:2px solid #fcba19; position:fixed; z-index:10000",
-           tags$header(class="header", style="padding:0 0px 0 0px; display:flex; height:80px; width:100%;",
-             tags$div(class="banner", style="display:flex; justify-content:flex-start; align-items:center; margin: 0 10px 0 10px",
-               a(href="https://www2.gov.bc.ca/gov/content/data/about-data-management/bc-stats",
-                 img(src = "bcstats_logo_rev.png", title = "BC Stats", height = "80px", alt = "British Columbia - BC Stats"),
-                 onclick="gtag"
-               ),
-               h1("Household Projections for British Columbia", style="font-weight:400; color:white; margin: 5px 5px 0 18px;")
-             )
-           )
-    ),
+    
+    bcsapps::bcsHeaderUI(id = "header", appname = "Household Estimates & Projections for British Columbia"),
+    
     column(width = 12,
            style = "margin-top:100px",
            
@@ -189,6 +180,8 @@ ui <- fluidPage(title = "BC Household Projections",
 
 ## Define server logic ----
 server <- function(input, output, session) {
+  
+  bcsapps::bcsHeaderServer(id = 'header', links = TRUE)
 
   ## selections ----
   ## defaults: selectInput(inputId, label, choices, selected = NULL, multiple = FALSE,
