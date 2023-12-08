@@ -37,14 +37,14 @@ if (!require('shiny')) install.packages('shiny')
 if (!require('shinydashboard')) install.packages('shinydashboard')
 if (!require('rsconnect')) install.packages('rsconnect')
 if (!require('DT')) install.packages('DT')
-if (!require('GAlogger')) devtools::install_github("bnosac/GAlogger")
+# if (!require('GAlogger')) devtools::install_github("bnosac/GAlogger")
 if (!require('markdown')) install.packages('markdown')
 if (!require('janitor')) install.packages('janitor')
 
 ## Google Analytics ----
-ga_set_tracking_id("UA-150850915-3")
-ga_set_approval(consent = TRUE)
-ga_collect_pageview(page = "/hsdProjApp")
+# ga_set_tracking_id("UA-150850915-3")
+# ga_set_approval(consent = TRUE)
+# ga_collect_pageview(page = "/hsdProjApp")
 
 ## read data ----
 data1 <- readRDS("data/data.rds")  ## by single-year intervals
@@ -67,6 +67,16 @@ ui <- fluidPage(title = "BC Household Projections",
   fluidRow(
     
     bcsapps::bcsHeaderUI(id = "header", appname = "Household Estimates & Projections for British Columbia"),
+    
+    htmltools::HTML("<!-- Google tag (gtag.js) -->
+<script async src='https://www.googletagmanager.com/gtag/js?id=G-904KHMXRJB'></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-904KHMXRJB');
+</script>"),
     
     column(width = 12,
            style = "margin-top:100px",
@@ -326,9 +336,9 @@ server <- function(input, output, session) {
   ## reactive resetButton send analytics when reset ----
   observeEvent(input$resetButton, {
     
-    ga_collect_event(event_category = "resetButton", 
-                     event_label = "Reset", 
-                     event_action = "Reset application")
+    # ga_collect_event(event_category = "resetButton", 
+    #                  event_label = "Reset", 
+    #                  event_action = "Reset application")
     
     ## just reload the session
     session$reload()
@@ -340,18 +350,18 @@ server <- function(input, output, session) {
   
   observeEvent(rv$download_flag, {
     
-    ga_collect_event(event_category = "downloadButton", 
-                     event_label = paste0("Download: ", input$Region.Type), 
-                     event_action = "Download data")
+    # ga_collect_event(event_category = "downloadButton", 
+    #                  event_label = paste0("Download: ", input$Region.Type), 
+    #                  event_action = "Download data")
     
   }, ignoreInit = TRUE)
   
   ## reactive send analytics when query table ----
   observeEvent(input$goButton, {
     
-    ga_collect_event(event_category = "goButton", 
-                     event_label = paste0("Query: ", input$Region.Type), 
-                     event_action = "Generate data")
+    # ga_collect_event(event_category = "goButton", 
+    #                  event_label = paste0("Query: ", input$Region.Type), 
+    #                  event_action = "Generate data")
     
   })
   
