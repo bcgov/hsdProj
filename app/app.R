@@ -72,18 +72,8 @@ ui <- fluidPage(title = "BC Household Projections",
   theme = "bootstrap.css",
   HTML("<html lang='en'>"),
   fluidRow(
-    
+    tags$head(includeHTML("www/google-analytics.html")),
     bcsapps::bcsHeaderUI(id = "header", appname = "Household Estimates & Projections for British Columbia"),
-    
-    htmltools::HTML("<!-- Google tag (gtag.js) -->
-<script async src='https://www.googletagmanager.com/gtag/js?id=G-904KHMXRJB'></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-904KHMXRJB');
-</script>"),
     
     column(width = 12,
            style = "margin-top:100px",
@@ -428,6 +418,9 @@ server <- function(input, output, session) {
     },
 
     content = function(file) {
+      ## send download event tracking to google analytics
+      session$sendCustomMessage("trackDownload", list(filename = "Household_Projections.csv"))
+      
       #!!! MK: Tweaking code to add header to downloaded output
       df <- data_df()
       col_names <- names(df)
@@ -470,6 +463,9 @@ Years: ", yrs,"
     },
     
     content = function(file) {
+      ## send download event tracking to google analytics
+      session$sendCustomMessage("trackDownload", list(filename = "lha_translation.csv"))
+      
       file.copy("data/lha_translation.csv", file)
     }
   )
