@@ -26,6 +26,13 @@
 #   4. deployApp(appName = "hsdProjApp", appId = 1421868)
 # 
 # https://bcstats.shinyapps.io/hsdProjApp/
+#
+# Revision notes:
+# 2025-02-04 MK: 1) Tweaked code to add header information to the downloaded CSV output;
+
+#Parameters ----
+Update_date <- "December 19, 2025" #Date when this version was first published
+Statcan_update <- "November 7, 2025" #Date when Statcan's household estimates used as reference was published.
 
 ## metadata for app ----
 dataVersion <- "Households 2021"
@@ -132,7 +139,13 @@ ui <- fluidPage(title = "BC Household Projections",
                           ## Notes ----
                           tags$fieldset(
                             tags$legend(h3("Notes")),
-                            HTML(paste0("<ul><li>All figures are as of July 1 and are adjusted for 
+                            HTML(paste0(paste0("<ul><li>This version was published on <b>",
+                                               Update_date,
+                                               "</b> and uses as reference the <b>",
+                                               "<a href='https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1710015901'>provincial-level household estimates</a></b> ",
+                                               "published by Statistics Canada on <b>",
+                                               Statcan_update,"</b>.</li>"),
+                                        "<li>All figures are as of July 1 and are adjusted for 
                                                  census net undercoverage (including adjustment for 
                                                  incompletely enumerated Indian Reserves).</li>",
                                              # "<li>As of January 2020, Local Health Area (LHA) 
@@ -415,7 +428,37 @@ server <- function(input, output, session) {
     },
 
     content = function(file) {
-      write.csv(data_df(), file, row.names = FALSE, na = "")
+      #!!! MK: Tweaking code to add header to downloaded output
+      df <- data_df()
+      col_names <- names(df)
+      
+      #Reformatting year selection to only show contiguous ranges
+      yrs <- input$Year
+      yrs <- yrs[!grepl("Estimates", yrs)] %>% as.numeric()  #remove est/proj divider text
+      start = c(1, which(diff(yrs) != 1 & diff(yrs) != 0) + 1)  #start of each contiguous sub-range
+      end = c(start - 1, length(yrs)) #end of each contiguous sub-range
+      yr_ranges <- data.frame(start=yrs[start],end=yrs[end])
+      yrs <- apply(yr_ranges,1,function(x) if (x[1]!=x[2]) {paste0(x[1],"-",x[2])} else {x[1]}) %>% str_flatten(",")
+      #      yrs <- input$Year %>% str_flatten(.," ") %>% str_remove("-- Estimates above, Projections below --")
+      
+      #Building text block for header
+      text <- paste0("
+Household Estimates and Projections for British Columbia
+Author: BC Stats
+Release date: December 19, 2025
+Geographic level: ",input$Region.Type,"
+Years: ", yrs,"
+-------------------------------------------------
+")
+      #Wrangling the df output so that header text and column names appear before the data values
+      header <- read.table(text=text,header=F,sep="\n")
+      header <- cbind(header, matrix("",nrow(header),ncol(df)-1) %>% as.data.frame())
+      names(header) <- col_names
+      df <- rbind(header,col_names,df) %>% unname()
+      
+      write.csv(df, file, row.names = F, na = "")
+#      write.csv(data_df(), file, row.names = FALSE, na = "")  ## col.names = FALSE, append = TRUE,
+#!!! MK: End of code tweak
       rv$download_flag <- rv$download_flag + 1
     }
   )
