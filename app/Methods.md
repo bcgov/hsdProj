@@ -22,3 +22,9 @@ The GitHub repo for this app is: **<a href='https://github.com/bcgov/hsdProj'>ht
 
 * Population Estimates & Projections app: **<a href='https://bcstats.shinyapps.io/popApp/'>https://bcstats.shinyapps.io/popApp/</a>**
 <br><br>
+
+### Version Information
+
+This version of BC Stats' household estimates and projections was published on **December 19, 2025** and use
+as reference the **<a href='https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1710015901'>provincial-level household estimates</a>** published by Statistics Canada on **November 7 2025**.
+<br><br>
